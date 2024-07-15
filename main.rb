@@ -63,7 +63,7 @@ def criarCPF(regiao)
     if verificarCPF(cpf)
         return cpf
     else 
-        return Error.new("gaerjugijer")
+        return Error.new("A criação do CPF foi mal sucedida")
     end
 end
 def verificarCPF(cpf)
