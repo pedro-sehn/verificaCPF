@@ -7,9 +7,16 @@ class Error
         raise "ERROR: #{@msg}"
     end
 end
+def gerarTemplateCPF(cpf)
+    cpf.split("")
+    cpf.insert(3, ".")
+    cpf.insert(7, ".")
+    cpf.insert(11, "-")
+    
+    return cpf
+end
 def gerarNumerosVerificadores(cpf)
-    numbers = cpf.scan(/\d+/).join.split("")
-    if numbers.length != 9
+    if cpf.length != 9
         return Error.new("Valor de CPF inválido. Não há a quantidade de dígitos esperada")
     end
     num1 = 0
@@ -21,7 +28,7 @@ def gerarNumerosVerificadores(cpf)
         if n == 0
             nums = [10,9,8,7,6,5,4,3,2]
             while(i < nums.length) do
-                num1 += numbers[i].to_i * nums[i]
+                num1 += cpf[i].to_i * nums[i]
     
                 i=i+1
             end
@@ -31,9 +38,9 @@ def gerarNumerosVerificadores(cpf)
             if num1 >= 10
                 num1 = 0
             end
-            numbers.push(num1)
+            cpf.push(num1.to_s)
             while(i < nums.length) do
-                num2 += numbers[i].to_i * nums[i]
+                num2 += cpf[i].to_i * nums[i]
                 
                 i=i+1
             end
@@ -41,7 +48,7 @@ def gerarNumerosVerificadores(cpf)
             if num2 >= 10
                 num2 = 0
             end
-            numbers.push(num2)
+            cpf.push(num2.to_s)
         end
         n = n + 1
     end
@@ -54,35 +61,31 @@ def criarCPF(regiao)
     8.times.map{ cpf += Random.rand(9).to_s }
     cpf += regiao.to_s
 
-    numerosVerificadores = gerarNumerosVerificadores(cpf)
+    numerosVerificadores = gerarNumerosVerificadores(cpf.split(""))
     numerosVerificadores.each_char do |num|
         cpf += num.to_s
     end
 
     cpf.to_i
-    if verificarCPF(cpf)
+    if verificarCPF(cpf.split(""))
+        cpf = gerarTemplateCPF(cpf)
         return cpf
     else 
         return Error.new("A criação do CPF foi mal sucedida")
     end
 end
 def verificarCPF(cpf)
-    numbers = cpf.scan(/\d+/).join.split("")
-    if numbers.length != 11
+    if cpf.length != 11
         return Error.new("Valor de CPF inválido. Não há a quantidade de dígitos esperada")
     end
     cpfCopia = []
-    numbers.each do |number|
+    cpf.each do |number|
         if cpfCopia.length < 9
             cpfCopia.push(number)
         end
     end 
-    numerosVerificadores = gerarNumerosVerificadores(cpfCopia.join)
-    numerosVerificadores.each_char do |num|
-        cpfCopia.push(num)
-    end
-    puts "#{cpfCopia}, #{numbers}"
-    if cpfCopia == numbers
+    numerosVerificadores = gerarNumerosVerificadores(cpfCopia)
+    if cpfCopia == cpf
         return true
     else
         return false
@@ -91,32 +94,66 @@ end
 def main
     loop do
         acoes = {
-            "cria" => "Criar CPF",
-            "verifica" => "Verificar CPF",
+            "criar" => "Criar CPF",
+            "verificar" => "Verificar CPF",
+            "gerar" => "Gerar os números verificadores do CPF",
             "sair" => "Sair do programa"
         }
         puts "Qual ação você deseja executar?"
-        puts "#{acoes}"
-
+        print "\n"
+        espaco = {
+            "keyName" => 0
+        }
+        acoes.each do |key, value|
+            if key.length > espaco["keyName"]
+                espaco["keyName"] = key
+                espaco["keyName"] = key.length
+            end
+        end
+        acoes.each do |key, value|
+            numEspaco = espaco["keyName"]-key.length
+            espacos = ""
+            numEspaco.times {espacos << " "}
+            puts "> #{key}#{espacos} - #{value}"
+        end
+        print("\n")
         input = gets.chomp
+        print("\n")
 
         case input.downcase
-        when "cria"
+        when "criar"
             puts "Insira o número da região"
             regiao = gets.chomp.to_i
 
             cpf = criarCPF(regiao)
             puts cpf
-        when "verifica"
-            puts "Insira um cpf"
+            print "\n"
+        when "verificar"
+            puts "Insira um CPF"
             cpf = gets.chomp
 
-            valor = verificarCPF(cpf)
-            puts valor
+            numeros = cpf.scan(/\d+/).join.split("")
+            valor = verificarCPF(numeros)
+            print "\n"
+            if valor
+                puts "> CPF Válido"
+            else 
+                puts "> CPF Inválido"
+            end
+            print "\n"
+        when "gerar"
+            puts "Insira os 9 dígitos do CPF"
+            cpf = gets.chomp
+            
+            numeros = cpf.scan(/\d+/).join.split("")
+            numerosVerificadores = gerarNumerosVerificadores(numeros)
+            numeros = numeros.join
+            puts "\nNúmeros verificadores: #{numerosVerificadores} \nCPF inteiro: #{gerarTemplateCPF(numeros.to_s)}"
+            print "\n"
         when "sair"
             break
         else
-            return Error.new("Valor inválido")
+            return Error.new("Comando inexistente")
         end
     end
 end
